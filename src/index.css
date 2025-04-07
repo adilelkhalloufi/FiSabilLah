@@ -1,51 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  body {
-    @apply bg-gray-50 text-secondary-800;
-  }
-
-  h1 {
-    @apply text-4xl font-bold text-secondary-900;
-  }
-
-  h2 {
-    @apply text-3xl font-semibold text-secondary-800;
-  }
-
-  h3 {
-    @apply text-2xl font-semibold text-secondary-700;
-  }
-
-  a {
-    @apply text-primary-600 hover:text-primary-700 transition-colors;
-  }
-}
-
-@layer components {
-  .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-  }
-
-  .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
-  }
-
-  .btn-secondary {
-    @apply btn bg-secondary-100 text-secondary-700 hover:bg-secondary-200 focus:ring-secondary-400;
-  }
-
- 
-
-  .card {
-    @apply bg-white rounded-xl shadow-card p-6;
-  }
-}
-
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -68,7 +22,13 @@ a:hover {
   color: #535bf2;
 }
 
- 
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
 
 h1 {
   font-size: 3.2em;
