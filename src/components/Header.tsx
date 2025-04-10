@@ -18,11 +18,11 @@ export default function Header() {
             <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Chikhs}> Chikhs </Link>
           </li>
           <li>
-            <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Chikhs}> Subjects </Link>
+            <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Subjects}> Subjects </Link>
           </li>
 
           <li>
-            <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Chikhs}> Videos </Link>
+            <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Videos}> Videos </Link>
           </li>
         
         

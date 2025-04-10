@@ -4,4 +4,5 @@ export const webRoutes = {
     Chikhs : "/Chikhs",
     Subjects : "/Subjects",
     Videos  : "/Videos",
+    
 }
