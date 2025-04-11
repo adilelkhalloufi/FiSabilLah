@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { apiRoutes, IMAGE_URL } from '../routes/apiRoutes';
+import { apiRoutes } from '../routes/apiRoutes';
 
 interface Subject {
   id: string;
   name: string;
   description: string;
-  image?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -17,9 +16,7 @@ const SubjectPage = () => {
   const [formData, setFormData] = useState<Omit<Subject, 'id' | 'created_at' | 'updated_at'>>({
     name: '',
     description: '',
-    image: '',
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,21 +25,6 @@ const SubjectPage = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
-
-      // Preview the image
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormData(prev => ({ ...prev, image: event.target?.result as string }));
-        }
-      };
-      reader.readAsDataURL(e.target.files[0]);
-    }
   };
 
   const fetchSubjects = async () => {
@@ -62,22 +44,7 @@ const SubjectPage = () => {
   const createSubject = async (data: Omit<Subject, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       setLoading(true);
-
-      // Create FormData object to handle file upload
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', data.name);
-      formDataToSend.append('description', data.description);
-
-      if (imageFile) {
-        formDataToSend.append('image', imageFile);
-      }
-
-      const response = await axios.post(apiRoutes.subjects, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
+      const response = await axios.post(apiRoutes.subjects, data);
       setSubjects(prev => [...prev, response.data]);
       return true;
     } catch (err) {
@@ -92,36 +59,7 @@ const SubjectPage = () => {
   const updateSubject = async (id: string, data: Omit<Subject, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       setLoading(true);
-
-      // Create FormData object to handle file upload
-      const formDataToSend = new FormData();
-      
-      // Explicitly set all required fields to ensure they're included
-      formDataToSend.append('name', data.name || '');
-      formDataToSend.append('description', data.description || '');
-      
-      // Add _method field to properly handle PUT requests through FormData
-      formDataToSend.append('_method', 'PUT');
-      
-      if (imageFile) {
-        formDataToSend.append('image', imageFile);
-      }
-      
-      // Log the formData for debugging
-      console.log('Updating subject with data:', {
-        id,
-        name: data.name,
-        description: data.description,
-        hasImageFile: !!imageFile
-      });
-      
-      // Use POST with _method: PUT for better compatibility with FormData
-      const response = await axios.post(`${apiRoutes.subjects}/${id}`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
+      const response = await axios.put(`${apiRoutes.subjects}/${id}`, data);
       setSubjects(prev => prev.map(subject => subject.id === id ? response.data : subject));
       return true;
     } catch (err) {
@@ -168,21 +106,16 @@ const SubjectPage = () => {
       setFormData({
         name: '',
         description: '',
-        image: '',
       });
-      setImageFile(null);
       setIsFormVisible(false);
     }
   };
 
   const handleEdit = (subject: Subject) => {
-    // Make sure to copy all required fields from the existing subject
     setFormData({
-      name: subject.name || '',  // Ensure it's never null
-      description: subject.description || '',  // Ensure it's never null
-      image: subject.image || '',
+      name: subject.name || '',
+      description: subject.description || '',
     });
-    setImageFile(null);
     setEditingId(subject.id);
     setIsFormVisible(true);
   };
@@ -193,7 +126,6 @@ const SubjectPage = () => {
     }
   };
 
-  // Filter subjects based on search query
   const filteredSubjects = subjects.filter(subject => 
     subject.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     subject.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -211,9 +143,7 @@ const SubjectPage = () => {
               setFormData({
                 name: '',
                 description: '',
-                image: '',
               });
-              setImageFile(null);
             }
           }}
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center"
@@ -231,7 +161,6 @@ const SubjectPage = () => {
         </div>
       )}
 
-      {/* Search input */}
       <div className="mb-6">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -278,24 +207,6 @@ const SubjectPage = () => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
-                {formData.image && (
-                  <div className="mt-2">
-                    <img 
-                      src={formData.image} 
-                      alt="Preview" 
-                      className="h-40 w-auto object-cover rounded-md"
-                    />
-                  </div>
-                )}
-              </div>
             </div>
             <div className="flex justify-end">
               <button
@@ -318,15 +229,6 @@ const SubjectPage = () => {
           {filteredSubjects.length > 0 ? (
             filteredSubjects.map((subject) => (
               <div key={subject.id} className="bg-white rounded-lg overflow-hidden shadow-md border border-gray-200 transition-transform hover:scale-[1.02] hover:shadow-lg">
-                {subject.image && (
-                  <div className="w-full h-48 overflow-hidden">
-                    <img 
-                      src={IMAGE_URL + subject.image} 
-                      alt={subject.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
                 <div className="p-5">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">{subject.name}</h3>
                   <p className="text-gray-600 mb-4">{subject.description}</p>
