@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { apiRoutes } from '../routes/apiRoutes';
+import Header from '../components/Header';
 
 interface Subject {
   id: string;
@@ -133,6 +134,7 @@ const SubjectPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Header />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Subjects</h1>
         <button

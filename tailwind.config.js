@@ -6,13 +6,15 @@ export default {
   ],
   theme: {
     extend: {
-       colors : {
+       colors: {
         primary: "#02343F",
         secondary: "#F0EDCC",
-      
+      },
+      fontFamily: {
+        arabic: ['Amiri', 'serif'],
+      },
     },
   },
   plugins: [],
-}
 }
 

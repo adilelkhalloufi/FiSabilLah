@@ -4,6 +4,7 @@ import ChikhisPage from "../pages/ChikhisPage";
 import App from "../App";
 import SubjectPage from "../pages/SubjectPage";
 import VideoPage from "../pages/VideoPage";
+import CalendarPage from "../pages/CalendarPage";
 
  
 export const browserRouter = createBrowserRouter([
@@ -25,7 +26,9 @@ export const browserRouter = createBrowserRouter([
         path : webRoutes.Videos ,
         element : <VideoPage/>
     },
-  
+    {
+        path : webRoutes.Calendar,
+        element : <CalendarPage/>
+    },
 ]);
 
- 

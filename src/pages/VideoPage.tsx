@@ -197,11 +197,17 @@ const VideoPage = () => {
   // Filter videos based on search query and filters
   const filteredVideos = videos.filter(video => {
     const matchesSearch = 
-      video.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.url.toLowerCase().includes(searchQuery.toLowerCase());
+      video.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesChikhi = filterChikhiId ? video.chikhi_id === filterChikhiId : true;
-    const matchesSubject = filterSubjectId ? video.subject_id === filterSubjectId : true;
+    // Convert both to strings for consistent comparison
+    const videoChikhiId = String(video.chikhi_id);
+    const videoSubjectId = String(video.subject_id);
+    const selectedChikhiId = String(filterChikhiId);
+    const selectedSubjectId = String(filterSubjectId);
+    
+    // Compare as strings, but still respect empty filter state
+    const matchesChikhi = !filterChikhiId || videoChikhiId === selectedChikhiId;
+    const matchesSubject = !filterSubjectId || videoSubjectId === selectedSubjectId;
     
     return matchesSearch && matchesChikhi && matchesSubject;
   });

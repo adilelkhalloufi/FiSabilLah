@@ -1,4 +1,3 @@
- 
 import { Link } from 'react-router'
 import Logo from '../assets/logo.svg'
 import { webRoutes } from '../routes/webRoutes'
@@ -24,8 +23,10 @@ export default function Header() {
           <li>
             <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Videos}> Videos </Link>
           </li>
-        
-        
+          
+          <li>
+            <Link className="text-gray-500 transition hover:text-gray-500/75" to={webRoutes.Calendar}> Islamic Calendar </Link>
+          </li>
         </ul>
       </nav>
 

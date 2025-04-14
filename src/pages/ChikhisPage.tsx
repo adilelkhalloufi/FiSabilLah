@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { apiRoutes, IMAGE_URL } from '../routes/apiRoutes';
+import Header from '../components/Header';
 
 interface Chikh {
   id: string;
@@ -202,6 +203,7 @@ const ChikhisPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Header/>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Islamic Scholars</h1>
         <button
