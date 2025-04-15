@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import Header from '../components/Header';
+import { apiRoutes, IMAGE_URL } from '../routes/apiRoutes';
+import axios from 'axios';
 
 interface IslamicEvent {
   name: string;
@@ -9,6 +11,12 @@ interface IslamicEvent {
   hijriDay: number;
   type: 'holiday' | 'event' | 'worship';
   subject?: string;
+}
+
+interface Sheikh {
+  id: number;
+  name: string;
+  image: string;
 }
 
 interface HijriDate {
@@ -74,177 +82,62 @@ const CalendarPage = () => {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
   const [islamicEvents, setIslamicEvents] = useState<IslamicEvent[]>([]);
   const [calendarData, setCalendarData] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [calendarDays, setCalendarDays] = useState<CalendarDayData[]>([]);
-
-  // Config for API calls
-  const apiConfig = {
-    method: 1, // MuslimWorldLeague method in aladhan API
-    latitude: 21.422510,
-    longitude: 39.826168
+  const [selectedDay, setSelectedDay] = useState<CalendarDayData | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [sheikhs, setSheikhs] = useState<Sheikh[]>([]);
+  const fetchChikhis = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(apiRoutes.chikhis);
+      setSheikhs(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching chikhis:', err);
+      setError('Failed to load scholars. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
-
-  // Fetch Islamic events from aladhan.com API
-  useEffect(() => {
-    const fetchIslamicEvents = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('https://api.aladhan.com/v1/specialDays');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch Islamic events');
-        }
-
-        const data = await response.json();
-
-        if (!data.data || !Array.isArray(data.data)) {
-          throw new Error('Invalid data format from API');
-        }
-
-        const transformedEvents: IslamicEvent[] = data.data.map((event: any) => {
-          let hijriMonth = 1;
-          let hijriDay = 1;
-
-          if (event.hijri && event.hijri.date) {
-            const hijriDateParts = event.hijri.date.split('-');
-            if (hijriDateParts.length === 3) {
-              hijriMonth = parseInt(hijriDateParts[1]);
-              hijriDay = parseInt(hijriDateParts[2]);
-            }
-          }
-
-          let eventType: 'holiday' | 'event' | 'worship' = 'event';
-          const name = (event.name || '').toLowerCase();
-
-          if (name.includes('eid') || name.includes('عيد')) {
-            eventType = 'holiday';
-          } else if (
-            name.includes('laylat') ||
-            name.includes('night') ||
-            name.includes('ramadan') ||
-            name.includes('رمضان') ||
-            name.includes('arafah') ||
-            name.includes('عرفة')
-          ) {
-            eventType = 'worship';
-          }
-
-          return {
-            name: event.name || 'Islamic Event',
-            nameAr: event.nameAr || event.name || 'حدث إسلامي',
-            description: event.description || '',
-            hijriMonth,
-            hijriDay,
-            type: eventType,
-            subject: event.subject || undefined
-          };
-        });
-
-        setIslamicEvents(transformedEvents);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching Islamic events:', err);
-        setError('Failed to load Islamic events. Please try again later.');
-
-        const fallbackEvents: IslamicEvent[] = [
-          {
-            name: "Eid al-Fitr",
-            nameAr: "عيد الفطر",
-            description: "Celebration marking the end of Ramadan",
-            hijriMonth: 10,
-            hijriDay: 1,
-            type: 'holiday'
-          },
-          {
-            name: "Eid al-Adha",
-            nameAr: "عيد الأضحى",
-            description: "Feast of Sacrifice",
-            hijriMonth: 12,
-            hijriDay: 10,
-            type: 'holiday'
-          },
-          {
-            name: "Laylat al-Qadr",
-            nameAr: "ليلة القدر",
-            description: "Night of Power",
-            hijriMonth: 9,
-            hijriDay: 27,
-            type: 'worship'
-          }
-        ];
-        setIslamicEvents(fallbackEvents);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchIslamicEvents();
-  }, []);
 
   // Fetch calendar data for the selected month using aladhan.com API
   useEffect(() => {
-    const fetchCalendarData = async () => {
-      try {
-        setLoading(true);
-
-        const calendarDataMap: Record<string, any> = {};
-
-        const monthResponse = await fetch(
-          `https://api.aladhan.com/v1/calendar?latitude=${apiConfig.latitude}&longitude=${apiConfig.longitude}&method=${apiConfig.method}&month=${selectedMonth + 1}&year=${selectedYear}`
-        );
-
-        if (!monthResponse.ok) {
-          throw new Error('Failed to fetch calendar data');
-        }
-
-        const monthData = await monthResponse.json();
-
-        if (!monthData.data || !Array.isArray(monthData.data)) {
-          throw new Error('Invalid month data format from API');
-        }
-
-        monthData.data.forEach((day: any) => {
-          if (day.date && day.date.gregorian && day.date.hijri) {
-            const gregDate = day.date.gregorian.date;
-            const dateParts = gregDate.split('-');
-            if (dateParts.length === 3) {
-              const dateKey = `${dateParts[0]}-${dateParts[1]}-${dateParts[2]}`;
-              calendarDataMap[dateKey] = day;
-            }
-          }
-        });
-
-        setCalendarData(calendarDataMap);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching calendar data:', err);
-        setError('Failed to load Islamic calendar data. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCalendarData();
-  }, [selectedMonth, selectedYear]);
+    fetchChikhis();
+    setCalendarData({
+      '2025-04-01': { title: 'فضل عيد الفطر' },
+      '2025-04-02': { title: 'زكاة الفطر' },
+      '2025-04-03': { title: 'آداب العيد' },
+      '2025-04-04': { title: 'صلة الرحم بعد رمضان' },
+      '2025-04-05': { title: 'الاستمرار في الطاعة بعد رمضان' },
+      '2025-04-06': { title: 'الفرح المشروع في الإسلام' },
+      '2025-04-07': { title: 'أثر العيد على المجتمع' },
+      '2025-04-08': { title: 'صيام الست من شوال' },
+      '2025-04-09': { title: 'نية الصيام' },
+      '2025-04-10': { title: 'الاستغفار بعد رمضان' },
+      '2025-04-11': { title: 'الاستمرار في قراءة القرآن' },
+      '2025-04-12': { title: 'قيام الليل في غير رمضان' },
+      '2025-04-13': { title: 'الصدقة بعد رمضان' },
+      '2025-04-14': { title: 'التوبة والاستغفار' },
+      '2025-04-15': { title: 'أهمية الدعاء في كل الأوقات' },
+      '2025-04-16': { title: 'النية في الأعمال' },
+      '2025-04-17': { title: 'التحلي بالأخلاق الحسنة' },
+      '2025-04-18': { title: 'أهمية الوقت في حياة المسلم' },
+      '2025-04-19': { title: 'الاستمرار في الذكر' },
+      '2025-04-20': { title: 'التخطيط للعام الهجري' },
+      '2025-04-21': { title: 'التفكر في خلق الله' },
+      '2025-04-22': { title: 'الاستعداد للأشهر القادمة' },
+      '2025-04-23': { title: 'مراجعة النفس' },
+      '2025-04-24': { title: 'أهمية الصحبة الصالحة' },
+      '2025-04-25': { title: 'تعلم علم جديد في الدين' },
+      '2025-04-26': { title: 'الاستمرار في الدعوة إلى الله' },
+      '2025-04-27': { title: 'الاستعداد لذي القعدة وذي الحجة' },
+      '2025-04-28': { title: 'خاتمة الشهر' },
+    });
+  }, []);
 
   const getHijriDate = (date: Date): HijriDate => {
-    const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    const apiData = calendarData[dateKey];
-
-    if (apiData && apiData.date && apiData.date.hijri) {
-      const hijriData = apiData.date.hijri;
-      return {
-        year: parseInt(hijriData.year),
-        month: parseInt(hijriData.month),
-        day: parseInt(hijriData.day),
-        monthName: hijriData.month.en,
-        monthNameAr: hijriData.month.ar,
-        weekdayAr: hijriData.weekday.ar
-      };
-    }
-
-    const yearOffset = Math.floor((date.getFullYear() - 622) * (33 / 32));
     const approxHijriMonth = ((date.getMonth() + 10) % 12) + 1;
 
     return {
@@ -258,26 +151,16 @@ const CalendarPage = () => {
   };
 
   const getIslamicEventsForDay = (hijriMonth: number, hijriDay: number): IslamicEvent[] => {
-    return islamicEvents.filter(
-      event => event.hijriMonth === hijriMonth && event.hijriDay === hijriDay
-    );
-  };
-
-  const getPrayerTimes = (date: Date) => {
-    const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    const apiData = calendarData[dateKey];
-
-    if (apiData && apiData.timings) {
-      return {
-        fajr: apiData.timings.Fajr.split(' ')[0],
-        dhuhr: apiData.timings.Dhuhr.split(' ')[0],
-        asr: apiData.timings.Asr.split(' ')[0],
-        maghrib: apiData.timings.Maghrib.split(' ')[0],
-        isha: apiData.timings.Isha.split(' ')[0],
-      };
-    }
-
-    return undefined;
+    return [
+      {
+        name: "Islamic Lecture",
+        nameAr: "محاضرة إسلامية",
+        description: "A lecture about Islamic teachings",
+        hijriMonth: hijriMonth,
+        hijriDay: hijriDay,
+        type: 'event'
+      }
+    ];
   };
 
   useEffect(() => {
@@ -304,13 +187,10 @@ const CalendarPage = () => {
       const date = new Date(selectedYear, selectedMonth, day);
       const hijri = getHijriDate(date);
 
-      const prayerTimes = getPrayerTimes(date);
-
       calendarArray.push({
         date,
         hijri,
-        events: getIslamicEventsForDay(hijri.month, hijri.day),
-        prayerTimes
+        events: getIslamicEventsForDay(hijri.month, hijri.day)
       });
     }
 
@@ -362,6 +242,23 @@ const CalendarPage = () => {
       monthNameAr: hijriMonthsArabic[0],
       year: 1445
     };
+  };
+
+  const handleDayClick = (day: CalendarDayData) => {
+    setSelectedDay(day);
+    setShowModal(true);
+  };
+
+  const handleSheikhClick = (sheikh: Sheikh) => {
+    if (!selectedDay) return;
+
+    const dateKey = `${selectedDay.date.getFullYear()}-${(selectedDay.date.getMonth() + 1).toString().padStart(2, '0')}-${selectedDay.date.getDate().toString().padStart(2, '0')}`;
+    const eventTitle = calendarData[dateKey]?.title || "Islamic lecture";
+
+    const searchQuery = `${eventTitle} ${sheikh.name}`;
+    const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+
+    window.open(youtubeSearchUrl, '_blank');
   };
 
   const currentHijriMonth = getCurrentHijriMonth();
@@ -428,16 +325,9 @@ const CalendarPage = () => {
                     day.date.getFullYear() === new Date().getFullYear();
 
                   const isCurrentMonth = day.date.getMonth() === selectedMonth;
-
-                  const hasEvent = day.events.length > 0;
-
-                  let specialClass = '';
-                  if (hasEvent) {
-                    const eventType = day.events[0].type;
-                    if (eventType === 'holiday') specialClass = 'bg-red-100 border-red-400';
-                    else if (eventType === 'event') specialClass = 'bg-blue-100 border-blue-400';
-                    else if (eventType === 'worship') specialClass = 'bg-emerald-100 border-emerald-400';
-                  }
+                  
+                  const dateKey = `${day.date.getFullYear()}-${(day.date.getMonth() + 1).toString().padStart(2, '0')}-${day.date.getDate().toString().padStart(2, '0')}`;
+                  const hasTopic = calendarData[dateKey] && calendarData[dateKey].title;
 
                   return (
                     <div
@@ -445,73 +335,79 @@ const CalendarPage = () => {
                       className={`min-h-[100px] p-2 border rounded-lg relative transition-all 
                     ${isToday ? 'border-emerald-500 shadow-md ring-2 ring-emerald-300' : 'border-gray-200'} 
                     ${!isCurrentMonth ? 'text-gray-400 bg-gray-50' : ''} 
-                    ${specialClass}
-                    hover:shadow-md`}
+                    ${hasTopic ? 'bg-emerald-50 border-emerald-300' : ''}
+                    hover:shadow-md cursor-pointer`}
+                      onClick={() => handleDayClick(day)}
                     >
                       <div className="flex justify-between">
                         <span className="text-lg">{day.date.getDate()}</span>
-                        <span className={`text-sm font-arabic ${hasEvent ? 'font-bold' : ''}`}>
+                        <span className={`text-sm font-arabic`}>
                           {day.hijri.day}
                         </span>
                       </div>
 
-                      {isCurrentMonth && day.prayerTimes && (
-                        <div className="mt-1 text-xs text-gray-600">
-                          <div className="grid grid-cols-2 gap-1">
-                            <span>Fajr: {day.prayerTimes.fajr}</span>
-                            <span>Dhuhr: {day.prayerTimes.dhuhr}</span>
-                            <span>Asr: {day.prayerTimes.asr}</span>
-                            <span>Maghrib: {day.prayerTimes.maghrib}</span>
-                            <span>Isha: {day.prayerTimes.isha}</span>
-                          </div>
+                      {isCurrentMonth && hasTopic && (
+                        <div className="mt-2 text-xs font-medium text-emerald-700 font-arabic text-right">
+                          {calendarData[dateKey].title}
                         </div>
                       )}
-
-                      {hasEvent && day.events.map((event, eventIndex) => (
-                        <div key={eventIndex} className="mt-1">
-                          <div className="text-xs font-bold text-emerald-700">{event.name}</div>
-                          <div className="text-xs font-arabic text-right">{event.nameAr}</div>
-                          {event.subject && isCurrentMonth && (
-                            <div className="text-xs mt-1 text-gray-600 italic">Topic: {event.subject}</div>
-                          )}
-                        </div>
-                      ))}
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-bold mb-4 text-emerald-700">Islamic Events Calendar</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {islamicEvents.map((event, index) => (
-                  <div key={index} className={`p-4 rounded-lg border 
-                ${event.type === 'holiday' ? 'bg-red-50 border-red-300' : ''} 
-                ${event.type === 'event' ? 'bg-blue-50 border-blue-300' : ''}
-                ${event.type === 'worship' ? 'bg-emerald-50 border-emerald-300' : ''}`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold">{event.name}</h4>
-                      <span className="text-right font-arabic">{event.nameAr}</span>
-                    </div>
-                    <div className="mt-1 text-sm text-gray-600">{event.description}</div>
-                    <div className="mt-2 text-xs font-medium">
-                      <span className="font-arabic">{hijriMonthsArabic[event.hijriMonth - 1]} {event.hijriDay}</span>
-                      <span className="mx-1">|</span>
-                      <span>{hijriMonthsEnglish[event.hijriMonth - 1]} {event.hijriDay}</span>
-                    </div>
-                    {event.subject && (
-                      <div className="mt-2 text-sm">
-                        <span className="font-semibold text-emerald-700">Suggested Topic:</span>
-                        <p className="text-gray-700">{event.subject}</p>
-                      </div>
-                    )}
+            {/* Sheikh Modal */}
+            {showModal && selectedDay && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg p-6 w-11/12 max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-emerald-700">
+                      {selectedDay.date.toLocaleDateString()} | {selectedDay.hijri.day} {selectedDay.hijri.monthNameAr} {selectedDay.hijri.year}
+                    </h2>
+                    <button 
+                      onClick={() => setShowModal(false)}
+                      className="bg-gray-200 p-2 rounded-full hover:bg-gray-300"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
-                ))}
+
+                  {/* Calendar event title */}
+                  {(() => {
+                    const dateKey = `${selectedDay.date.getFullYear()}-${(selectedDay.date.getMonth() + 1).toString().padStart(2, '0')}-${selectedDay.date.getDate().toString().padStart(2, '0')}`;
+                    const eventTitle = calendarData[dateKey]?.title;
+                    
+                    return eventTitle ? (
+                      <div className="mb-4 p-3 bg-emerald-50 rounded-lg">
+                        <h3 className="text-lg font-arabic text-right text-emerald-800">{eventTitle}</h3>
+                      </div>
+                    ) : null;
+                  })()}
+                  
+                  <h3 className="text-lg font-medium mb-4">Select a Sheikh to find lectures:</h3>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {sheikhs.map(sheikh => (
+                      <div 
+                        key={sheikh.id}
+                        className="flex flex-col items-center p-3 border rounded-lg hover:border-emerald-500 hover:bg-emerald-50 cursor-pointer transition-colors"
+                        onClick={() => handleSheikhClick(sheikh)}
+                      >
+                        <img 
+                          src={IMAGE_URL + sheikh.image} 
+                          alt={sheikh.name}
+                          className="w-20 h-20 object-cover rounded-full mb-2" 
+                        />
+                        <span className="text-center font-medium text-sm">{sheikh.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>

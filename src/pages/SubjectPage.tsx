@@ -204,7 +204,7 @@ const SubjectPage = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  required
+                   
                   rows={4}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />

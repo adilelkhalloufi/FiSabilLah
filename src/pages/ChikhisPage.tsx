@@ -186,6 +186,7 @@ const ChikhisPage = () => {
     });
     setImageFile(null);
     setEditingId(chikh.id);
+     window.scrollTo(0, 0);
     setIsFormVisible(true);
   };
 
@@ -276,7 +277,7 @@ const ChikhisPage = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  required
+                   
                   rows={4}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
