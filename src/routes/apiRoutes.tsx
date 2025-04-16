@@ -6,6 +6,7 @@ export const apiRoutes = {
     chikhis: `${API_URL}/chikhis`,
     subjects: `${API_URL}/subjects`,
     videos: `${API_URL}/videos`,
+    tags : `${API_URL}/tags`,
  
   };
 

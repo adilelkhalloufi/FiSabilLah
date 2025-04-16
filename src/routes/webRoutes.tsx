@@ -4,4 +4,5 @@ export const webRoutes = {
     Subjects : "/Subjects",
     Videos  : "/Videos",
     Calendar: "/Calendar",
+    Tags: "/Tags",
 }

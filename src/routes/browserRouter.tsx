@@ -5,6 +5,7 @@ import App from "../App";
 import SubjectPage from "../pages/SubjectPage";
 import VideoPage from "../pages/VideoPage";
 import CalendarPage from "../pages/CalendarPage";
+import TagsPage from "../pages/TagsPage";
 
  
 export const browserRouter = createBrowserRouter([
@@ -29,6 +30,10 @@ export const browserRouter = createBrowserRouter([
     {
         path : webRoutes.Calendar,
         element : <CalendarPage/>
+    },
+    {
+        path : webRoutes.Tags,
+        element : <TagsPage/>
     },
 ]);
 
